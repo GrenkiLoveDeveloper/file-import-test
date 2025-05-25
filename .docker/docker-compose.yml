@@ -1,0 +1,93 @@
+name: lara
+
+services:
+  nginx:
+    build:
+        context: nginx/
+        dockerfile: Dockerfile
+    container_name: lara-nginx
+    restart: unless-stopped
+    ports:
+        - "${NGINX_PORT}:80"
+    volumes:
+        - ../:/var/www/api
+        - ./nginx/logs:/var/log/nginx
+    networks:
+        - lara-network
+
+  postgres:
+    build:
+      context: db/
+      dockerfile: Dockerfile
+    container_name: lara-db
+    restart: unless-stopped
+    tty: true
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_lara_data:/var/lib/postgresql/data
+    networks:
+      - lara-network
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+  app:
+    build:
+      args:
+        user: sammy
+        uid: 1000
+      context: php/
+      dockerfile: Dockerfile
+    container_name: lara-app
+    image: lara-app:local
+    restart: unless-stopped
+    working_dir: /var/www/api
+    volumes:
+      - ../:/var/www/api
+    networks:
+      - lara-network
+    depends_on:
+      - nginx
+      - postgres
+    command: >
+      sh -c "
+        composer install --optimize-autoloader --no-scripts --prefer-dist --no-interaction &&
+        php artisan migrate &&
+        php-fpm
+      "
+
+  supervisor:
+    build:
+      context: php/supervisor
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/var/www/api
+    networks:
+      - lara-network
+    restart: always
+    depends_on:
+      - app
+
+  redis:
+    image: 'redis:7.4.2-alpine'
+    container_name: lara-redis-server
+    restart: unless-stopped
+    command: >
+      --requirepass ${REDIS_PASSWORD}
+    ports:
+      - ${FORWARD_REDIS_PORT:-6379}:6379
+    volumes:
+      - /data/redis_lara/data:/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=no
+    networks:
+      - lara-network
+
+networks:
+  lara-network:
+    driver: bridge
+volumes:
+  postgres_lara_data:
+    external: false
