@@ -21,10 +21,11 @@ class ExcelImportController extends Controller {
 
         $file = $request->file('file'); // @phpstan-ignore-line
 
-        $this->excelImportService->startAsyncImport($file);
+        $progressKey = $this->excelImportService->startAsyncImport($file);
 
         return response()->json([
             'message' => 'Импорт запущен',
+            'progress_key' => $progressKey,
         ], 200);
 
     }

@@ -21,7 +21,7 @@ class UploadExcelRequest extends FormRequest {
      */
     public function rules(): array {
         return [
-            'file' => 'required|file|mimes:xlsx',
+            'file' => 'required|file|mimes:xlsx,xls',
         ];
     }
 }
