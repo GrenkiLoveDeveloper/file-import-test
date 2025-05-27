@@ -9,5 +9,6 @@ Route::fallback(fn () => response()->json([
     'message' => 'Page Not Found.',
 ], 404));
 
-Route::post('/upload-excel', [ExcelImportController::class, 'upload'])
-    ->middleware('auth.basic');
+Route::middleware(['auth.basic'])->group(function (): void {
+    Route::post('/upload-excel', [ExcelImportController::class, 'upload']);
+});

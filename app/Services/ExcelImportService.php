@@ -21,8 +21,8 @@ final class ExcelImportService {
         }
         $progressKey = 'excel_import_progress_' . md5($path);
 
-        ImportExcelRowsJob::dispatch($path, $progressKey)
-            ->onQueue('excel-imports');
+        // ImportExcelRowsJob::dispatch($path, $progressKey)
+        //     ->onQueue('excel-imports');
 
         return $progressKey;
     }

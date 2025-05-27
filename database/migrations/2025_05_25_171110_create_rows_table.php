@@ -13,7 +13,7 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('rows', function (Blueprint $table): void {
             $table->id();
-            $table->unsignedBigInteger('excel_id')->unique();
+            $table->unsignedBigInteger('file_id');
             $table->string('name');
             $table->date('date');
             $table->timestamps();
