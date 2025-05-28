@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 final class ExcelImportService {
+    /**
+     * Start the asynchronous import of an Excel file.
+     *
+     * @param UploadedFile $file The uploaded Excel file.
+     * @return string The progress key for tracking the import status.
+     *
+     * @throws RuntimeException If the file cannot be saved or found.
+     */
     public function startAsyncImport(UploadedFile $file): string {
         $path = $file->store('imports');
         if ($path === false) {
@@ -21,8 +29,7 @@ final class ExcelImportService {
         }
         $progressKey = 'excel_import_progress_' . md5($path);
 
-        // ImportExcelRowsJob::dispatch($path, $progressKey)
-        //     ->onQueue('excel-imports');
+        ImportExcelRowsJob::dispatch($path, $progressKey)->onQueue('default');
 
         return $progressKey;
     }
