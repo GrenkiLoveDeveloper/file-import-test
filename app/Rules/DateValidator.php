@@ -5,29 +5,28 @@ declare(strict_types=1);
 namespace App\Rules;
 
 use Carbon\Carbon;
-use Closure;
-use Illuminate\Contracts\Validation\ValidationRule;
+use Exception;
 
-class DateValidator implements ValidationRule {
+final class DateValidator {
+    /**
+     * Validate a date string against a specific format.
+     *
+     * @param mixed $date The date to validate
+     * @param string $format The expected date format
+     * @return bool True if the date is valid, false otherwise
+     */
     public static function isValidDate(mixed $date, string $format): bool {
 
         if (empty($date) || ! is_string($date)) {
             return false;
         }
 
-        $parsed = Carbon::createFromFormat($format, $date);
+        try {
+            $parsedDate = Carbon::createFromFormat($format, $date);
 
-        return $parsed && $parsed->format($format) === $date;
-    }
-
-    /**
-     * Run the validation rule.
-     *
-     * @param Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     */
-    public function validate(string $attribute, mixed $value, Closure $fail): void {
-        if (! self::isValidDate($value, 'd.m.Y')) {
-            $fail('Дата не валидна');
+            return $parsedDate && $parsedDate->format($format) === $date;
+        } catch (Exception $e) {
+            return false;
         }
     }
 }

@@ -4,60 +4,64 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Generator;
-use Rap2hpoutre\FastExcel\FastExcel;
-use RuntimeException;
+use Illuminate\Support\Facades\Storage;
 
 trait ExcelChunkImportable {
     /**
-     * Imports an Excel file in chunks.
+     * Summary of readExcelInChunks.
      *
-     * @param string $path The path to the Excel file.
-     * @param int $chunkSize The size of each chunk.
-     * @param callable $processChunk Callback to process each chunk of rows.
-     * @param callable|null $transformRow Optional callback to map each row.
+     * @param string $filePath
+     * @param int $chunkSize
+     * @return Generator
      */
-    public function importUsingChunk(
-        string $path,
-        int $chunkSize,
-        callable $processChunk,
-        ?callable $transformRow = null
-    ): void {
-        if (! file_exists($path)) {
-            throw new RuntimeException("File not found: {$path}");
-        }
-        $buffer = [];
+    public function readExcelInChunks(string $filePath, int $chunkSize): Generator {
+        $isFirstRow = true;
+        $line = 1;
+        $reader = ReaderEntityFactory::createXLSXReader();
+        $reader->open(Storage::path($filePath));
 
-        foreach ($this->yieldRows($path, $transformRow) as $rowWithMeta) {
-            $buffer[] = $rowWithMeta;
+        $chunk = [];
 
-            if (count($buffer) === $chunkSize) {
-                $processChunk($buffer);
-                $buffer = [];
+        foreach ($reader->getSheetIterator() as $sheet) {
+
+            foreach ($sheet->getRowIterator() as $row) {
+                $line++;
+                $cells = $row->toArray();
+
+                if ($isFirstRow) {
+                    $isFirstRow = false;
+
+                    continue;
+                }
+
+                $chunk[] = ['data' => $cells, 'line' => $line];
+
+                if (count($chunk) === $chunkSize) {
+                    yield $chunk;
+                    $chunk = [];
+                }
             }
         }
 
-        if (! empty($buffer)) {
-            $processChunk($buffer);
+        if (! empty($chunk)) {
+            yield $chunk;
         }
+
+        $reader->close();
     }
 
     /**
-     * Yields rows from the Excel file.
+     * Processes an Excel file in chunks.
      *
-     * @param string $path The path to the Excel file.
-     * @param callable|null $transformRow Optional callback to map each row.
-     * @return Generator Yields each row with its line number.
+     * @param string $filePath The path to the Excel file.
+     * @param int $chunkSize The size of each chunk.
+     * @param callable $processChunk Callback to process each chunk of rows.
      */
-    private function yieldRows(string $path, ?callable $transformRow = null): Generator {
-        $line = 1;
-
-        foreach ((new FastExcel)->withoutHeaders()->import($path) as $row) {
-            $line++;
-            if ($transformRow) {
-                $row = $transformRow($row, $line);
-            }
-            yield ['row' => $row, 'line' => $line];
+    public function processChunks(string $filePath, int $chunkSize, callable $processChunk): void {
+        foreach ($this->readExcelInChunks($filePath, $chunkSize) as $chunk) {
+            $processChunk($chunk);
         }
     }
 }

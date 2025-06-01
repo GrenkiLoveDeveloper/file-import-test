@@ -27,6 +27,5 @@ class ExcelImportController extends Controller {
             'message' => 'Импорт запущен',
             'progress_key' => $progressKey,
         ], 200);
-
     }
 }
