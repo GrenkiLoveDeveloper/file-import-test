@@ -69,7 +69,7 @@ class ImportExcelRowsJob implements ShouldBeUnique, ShouldQueue {
      *
      * @param array<mixed> $row The row data.
      * @param int $line The line number in the file.
-     * @return array<mixed>|null Returns the validated row or null if there are errors.
+     * @return array{file_id: int, name: string, date: string}|null Returns the validated row or null if there are errors.
      */
     protected function validateRow(array $row, int $line): ?array {
         $errors = [];
@@ -102,10 +102,14 @@ class ImportExcelRowsJob implements ShouldBeUnique, ShouldQueue {
             return null;
         }
 
+        /**
+         * @var int $id
+         * @var string $name
+         */
         return [
-            'file_id' => $id,
-            'name' => $name,
-            'date' => Carbon::createFromFormat('d.m.Y', $date)?->format('Y-m-d'),
+            'file_id' => (int) $id,
+            'name' => (string) $name,
+            'date' => (string) Carbon::createFromFormat('d.m.Y', $date)?->format('Y-m-d'),
         ];
     }
 
