@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->unsignedBigInteger('file_id');
             $table->string('name');
             $table->date('date');
-            $table->timestamps();
         });
     }
 

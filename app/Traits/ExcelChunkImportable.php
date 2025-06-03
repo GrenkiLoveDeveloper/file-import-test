@@ -10,13 +10,26 @@ use Illuminate\Support\Facades\Storage;
 
 trait ExcelChunkImportable {
     /**
+     * Processes an Excel file in chunks.
+     *
+     * @param string $filePath The path to the Excel file.
+     * @param int $chunkSize The size of each chunk.
+     * @param callable $processChunk Callback to process each chunk of rows.
+     */
+    public function importExcelChunk(string $filePath, int $chunkSize, callable $processChunk): void {
+        foreach ($this->readExcelInChunks($filePath, $chunkSize) as $chunk) {
+            $processChunk($chunk);
+        }
+    }
+
+    /**
      * Summary of readExcelInChunks.
      *
      * @param string $filePath
      * @param int $chunkSize
      * @return Generator
      */
-    public function readExcelInChunks(string $filePath, int $chunkSize): Generator {
+    protected function readExcelInChunks(string $filePath, int $chunkSize): Generator {
         $isFirstRow = true;
         $line = 1;
         $reader = ReaderEntityFactory::createXLSXReader();
@@ -50,18 +63,5 @@ trait ExcelChunkImportable {
         }
 
         $reader->close();
-    }
-
-    /**
-     * Processes an Excel file in chunks.
-     *
-     * @param string $filePath The path to the Excel file.
-     * @param int $chunkSize The size of each chunk.
-     * @param callable $processChunk Callback to process each chunk of rows.
-     */
-    public function processChunks(string $filePath, int $chunkSize, callable $processChunk): void {
-        foreach ($this->readExcelInChunks($filePath, $chunkSize) as $chunk) {
-            $processChunk($chunk);
-        }
     }
 }
