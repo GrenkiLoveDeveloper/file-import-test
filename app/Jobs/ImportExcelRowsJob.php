@@ -18,7 +18,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
@@ -42,10 +41,10 @@ class ImportExcelRowsJob implements ShouldBeUnique, ShouldQueue {
         protected string $importKey
     ) {}
 
-    public function __destruct() {
-        $this->saveErrorReport();
-        // Storage::delete($this->filePath);
-    }
+    // public function __destruct() {
+    //     $this->saveErrorReport();
+    //     // Storage::delete($this->filePath);
+    // }
 
     public function uniqueId(): string {
         return $this->importKey;
@@ -62,6 +61,8 @@ class ImportExcelRowsJob implements ShouldBeUnique, ShouldQueue {
                 $this->processChunk($chunk);
             },
         );
+        $this->saveErrorReport();
+        Storage::delete($this->filePath);
     }
 
     /**
@@ -190,7 +191,6 @@ class ImportExcelRowsJob implements ShouldBeUnique, ShouldQueue {
         }
 
         $content = implode(PHP_EOL, $this->errorMessages);
-        Log::debug('Строка не прошла валидацию', ['line' => $content]);
         Storage::put('import-errors/result.txt', $content);
     }
 }

@@ -25,7 +25,7 @@ trait ExcelChunkImportable {
         $chunk = [];
 
         foreach ($reader->getSheetIterator() as $sheet) {
-
+            /** @phpstan-ignore-next-line */
             foreach ($sheet->getRowIterator() as $row) {
                 $line++;
                 $cells = $row->toArray();
